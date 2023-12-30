@@ -7,9 +7,9 @@ const Navigation = () => {
     const toggle = () => {
         setIsOpen(!isOpen);
     };
-    return(
+    return (
         <>
-            <Navbar toggle={toggle}/>
+            <Navbar toggle={toggle} />
         </>
     );
 };

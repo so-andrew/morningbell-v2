@@ -1,12 +1,14 @@
 'use client';
-import { useEffect } from 'react';
-import CreateForm from '../CreateForm';
-import { useRoom, useUser, useWs } from '../context/providers';
 
-const Create = () => {
+import { useEffect } from 'react';
+import { useWs, useRoom, useHomePageState } from './context/providers';
+import CreateForm from './CreateForm';
+import Link from 'next/link';
+
+function CreatePage() {
     const [ready, val, send] = useWs();
     const { roomID, setRoomID } = useRoom();
-    //const { userID, setUserID } = useUser();
+    const { setPageState } = useHomePageState();
 
     useEffect(() => {
         send(
@@ -26,6 +28,11 @@ const Create = () => {
         }
     }, [val]);
 
+    function handleJoinClick() {
+        setPageState('join');
+        setRoomID('');
+    }
+
     return (
         <section className='flex flex-col justify-center'>
             <div className='mx-auto my-10 text-center text-white max-w-xl'>
@@ -36,12 +43,22 @@ const Create = () => {
                         <span className='font-bold'>{roomID}</span>.
                     </p>
                 )}
+                <p className='mt-2'>
+                    Already have a room code?{' '}
+                    <Link
+                        className='text-blue-500'
+                        href='/'
+                        onClick={handleJoinClick}
+                    >
+                        Click here.
+                    </Link>
+                </p>
             </div>
             <div className='m-auto text-white'>
                 <CreateForm />
             </div>
         </section>
     );
-};
+}
 
-export default Create;
+export default CreatePage;
