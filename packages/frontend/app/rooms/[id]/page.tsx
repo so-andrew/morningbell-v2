@@ -11,7 +11,9 @@ import UserList from './UserList';
 import Chat from './Chat';
 import HostUserList from './HostList';
 import {
+    ChatMessage,
     UpdateBuzzerParams,
+    UpdateChatParams,
     UpdateRoomParams,
     UpdateUserParams,
 } from '@/types/WebSocketMessage';
@@ -19,18 +21,22 @@ import Link from 'next/link';
 
 export default function Room() {
     const router = useRouter();
+
+    // State from providers
     const { roomID, setRoomID } = useRoom();
     const { userID, setUserID, username, setUsername } = useUser();
     const { pageState, setPageState } = useHomePageState();
     const [ready, val, send] = useWs();
 
+    // State for game room
     const [userList, setUserList] = useState([]);
     const [buzzerLocked, setBuzzerLocked] = useState(false);
     const [buzz, setBuzz] = useState('');
     const [host, setHost] = useState('');
-    const [logs, setLogs] = useState<Array<string>>([]);
+    const [chatLogs, setChatLogs] = useState<Array<LogMessage | ChatMessage>>([]);
 
     const [showErrorMessage, setShowErrorMessage] = useState(false);
+    const [audio] = useState(new Audio('/bell.mp3'));
 
     //let rerouteToHome: NodeJS.Timeout | null = null;
     let showErrorMessageTimeout: NodeJS.Timeout | null = null;
@@ -72,8 +78,8 @@ export default function Room() {
         } else if (!ready) {
             showErrorMessageTimeout = setTimeout(() => {
                 setShowErrorMessage(true);
-                setPageState('landing');
-                setRoomID('');
+                //setPageState('landing');
+                //setRoomID('');
             }, 1000 * 5);
         }
     }, [ready]);
@@ -94,6 +100,9 @@ export default function Room() {
                     break;
                 case 'buzzerUpdate':
                     updateBuzzer(lastMessage.params);
+                    break;
+                case 'chatUpdate':
+                    updateChat(lastMessage.params);
                     break;
                 default:
                     console.log(
@@ -125,15 +134,16 @@ export default function Room() {
             hostID,
             buzzerLocked,
             buzz,
-            logs,
+            chatLogs,
             users,
         } = params;
         setRoomID(roomID);
         setHost(hostID);
         setBuzzerLocked(buzzerLocked);
         setBuzz(buzz);
-        setLogs(logs);
+        //setLogs(logs);
         setUserList(JSON.parse(users));
+        setChatLogs(chatLogs);
 
         localStorage.setItem('roomID', roomID);
     }
@@ -145,9 +155,14 @@ export default function Room() {
     }
 
     function updateUsers(params: UpdateUserParams): void {
-        const { users, logs } = params;
+        const { users, chatLogs } = params;
         setUserList(JSON.parse(users));
-        setLogs(logs);
+        setChatLogs(chatLogs);
+    }
+
+    function updateChat(params: UpdateChatParams): void {
+        const { chatLogs } = params;
+        setChatLogs(chatLogs);
     }
 
     function handleBuzz() {
@@ -167,6 +182,7 @@ export default function Room() {
             }
         } else {
             if (!buzzerLocked) {
+                audio.play();
                 send(
                     JSON.stringify({
                         type: 'buzz',
@@ -219,8 +235,8 @@ export default function Room() {
                             />
                         )}
                     </div>
-                    <div>
-                        <Chat />
+                    <div className='lg:col-start-2'>
+                        <Chat chatLogs={chatLogs}/>
                     </div>
                 </section>
             )}

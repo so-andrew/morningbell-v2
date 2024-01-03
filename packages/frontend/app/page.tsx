@@ -15,6 +15,17 @@ export default function Home() {
         if (ready) {
             console.log('WebSocket ready');
             localStorage.setItem('roomInitialLoadFinished', 'false');
+            console.log(`Room ID: ${roomID}`);
+            console.log(`Room ID from local storage: ${localStorage.getItem('roomID')}`);
+            if(roomID) {
+                send(JSON.stringify({
+                    type: 'leave',
+                    params: {
+                        code: roomID,
+                        userID: userID
+                    }
+                }));
+            }
             localStorage.removeItem('roomID');
         }
     }, [ready]);

@@ -1,12 +1,20 @@
 'use client';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useHomePageState, useRoom } from '@/app/context/providers';
+import { useHomePageState, useRoom, useUser, useWs } from '@/app/context/providers';
 
 const Logo = () => {
     const { roomID, setRoomID } = useRoom();
+    const { userID, setUserID } = useUser();
     const { pageState, setPageState } = useHomePageState();
+    const [ready, val, send] = useWs();
+    const pathname = usePathname();
+
+    const [sendLeaveMessage, setSendLeaveMessage] = useState(false);
+    const [oldRoomID, setOldRoomID] = useState('');
+    const re = /\/rooms\/(\w+)/;
 
     const [width, setWidth] = useState(0);
     const updateWidth = () => {
@@ -19,9 +27,41 @@ const Logo = () => {
     }, []);
 
     function handleLandingClick() {
+        const url = `${pathname}`;
+        const found = url.match(re);
+        if(found){
+            setSendLeaveMessage(true);
+            setOldRoomID(found[1]);
+            console.log(found[1], userID);
+            send(JSON.stringify({
+                type: 'leave',
+                params: {
+                    code: found[1],
+                    userID: userID,
+                }
+            }));
+            setRoomID('');
+        }
+        
         setPageState('landing');
-        setRoomID('');
     }
+
+    // This doesn't work, also it probably shouldn't even be here
+    // Maybe move this part to the landing page with state shared using context? idk
+
+    // useEffect(() => {
+    //     if(ready){
+    //         console.log(oldRoomID, userID);
+    //         send(JSON.stringify({
+    //             type: 'leave',
+    //             params: {
+    //                 code: oldRoomID,
+    //                 userID: userID,
+    //             }
+    //         }));
+    //         setRoomID('');
+    //     }
+    // }, [ready]);
 
     return (
         <>
@@ -33,7 +73,7 @@ const Logo = () => {
                     height={width < 1024 ? '48' : '64'}
                     className='relative p-1 hover:animate-wiggle'
                 />
-                <span className='self-center whitespace-nowrap text-xl text-white'>
+                <span className={`self-center whitespace-nowrap text-xl ${ready ? 'text-green-600' : 'text-red-500'}`}>
                     Morningbell
                 </span>
             </Link>

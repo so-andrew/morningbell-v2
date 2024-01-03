@@ -7,6 +7,10 @@ import url from 'url';
 import {
     ClientBuzzParams,
     ClientJoinParams,
+    ClientLeaveParams,
+    ClientChatParams,
+    ChatMessage,
+    LogMessage,
     RoomData,
 } from '../frontend/types/WebSocketMessage';
 
@@ -21,7 +25,7 @@ const wss = new WebSocketServer({ port: 8000 });
 const roomConnections = new Map<string, Map<string, WebSocket>>();
 const roomData = new Map<string, RoomData>();
 const users = new Map<string, Map<string, string>>();
-const logs = new Map<string, Array<string>>();
+const logs = new Map<string, Array<LogMessage>>();
 
 wss.on('connection', (ws, req) => {
     const params = url.parse(req.url, true);
@@ -92,6 +96,9 @@ wss.on('connection', (ws, req) => {
             case 'reset':
                 resetBuzzer(params);
                 break;
+            case 'chat':
+                chat(params);
+                break;
             default:
                 console.warn(`Unknown type ${type}`);
                 break;
@@ -161,9 +168,13 @@ wss.on('connection', (ws, req) => {
             roomConnections.get(roomID)!.set(uuid, ws); // Add socket to connection map
             users.get(roomID)!.set(uuid, username); // Add username to user map
             //console.log(users.get(roomID));
-            logs.get(roomID)!.push(
-                `User ${users.get(roomID)!.get(uuid)} joined the room.`
-            ); // Append to log
+            const log = {
+                code: roomID,
+                content: `${users.get(roomID)!.get(uuid)} joined the room.`,
+                timestamp: Date.now(),
+            }
+            logs.get(roomID)!.push(log);
+            roomData.get(roomID)!.combinedChatLogs.push(log);
         }
 
         // Sending join confirmation message to client
@@ -230,7 +241,9 @@ wss.on('connection', (ws, req) => {
             buzz: null,
             hostID: userID,
             users: new Map<string, string>(),
-            logs: new Array<string>(),
+            logs: new Array<LogMessage>(),
+            chat: new Array<ChatMessage>(),
+            combinedChatLogs: new Array<LogMessage | ChatMessage>(),
         };
 
         // Update in-memory collections
@@ -269,9 +282,13 @@ wss.on('connection', (ws, req) => {
             users.get(roomID)!.set(uuid, username); // Add username to user map
             //console.log(users.get(roomID));
             roomData.get(roomID)!.hostID = uuid; // Set host UUID
-            logs.get(roomID)!.push(
-                `User ${users.get(roomID)!.get(uuid)} joined the room.`
-            ); // Append to log
+            const log = {
+                code: roomID,
+                content:`${users.get(roomID)!.get(uuid)} joined the room.`,
+                timestamp: Date.now(),
+            };
+            logs.get(roomID)!.push(log);
+            roomData.get(roomID)!.combinedChatLogs.push(log);
         }
 
         // Sending join confirmation message to client
@@ -328,11 +345,14 @@ wss.on('connection', (ws, req) => {
         // });
     }
 
-    async function leave(params: { roomID: string; userID: string }) {
-        const { roomID, userID } = params;
+    async function leave(params: ClientLeaveParams) {
+        const { code: roomID, userID } = params;
         // users[roomID] = users[roomID].filter(
         //     (userID) => userID !== params.userID
         // );
+
+        console.log(`leave message received from ${params.userID}`);
+        console.log(params);
 
         if (!users.has(roomID)) {
             console.log(`Room ${roomID} does not exist, returning...`);
@@ -342,6 +362,14 @@ wss.on('connection', (ws, req) => {
         // Iterate through users in room, remove requesting user
         for (const key of users.get(roomID)!.keys()) {
             if (key === userID) {
+                const log = {
+                    code: roomID,
+                    content: `${users.get(roomID)!.get(key)} left the room.`,
+                    timestamp: Date.now(),
+                }
+                logs.get(roomID)!.push(log);
+                roomData.get(roomID)!.combinedChatLogs.push(log);
+                
                 users.get(roomID)!.delete(key);
                 roomConnections.get(roomID)!.delete(key);
             }
@@ -349,18 +377,8 @@ wss.on('connection', (ws, req) => {
         //delete roomConnections[roomID][params.userID];
 
         // Send message to clients
-        for (const client of roomConnections.get(roomID)!.values()) {
-            client.send(
-                JSON.stringify({
-                    type: 'userUpdate',
-                    params: {
-                        code: roomID,
-                        users: JSON.stringify(Array.from(users.get(roomID)!)),
-                        logs: logs.get(roomID),
-                    },
-                })
-            );
-        }
+        broadcastUserUpdate(roomID);
+        
 
         //if (!roomConnections.get(roomID).has(uuid)) return;
         if (roomConnections.get(roomID)!.size === 0) {
@@ -483,27 +501,24 @@ wss.on('connection', (ws, req) => {
         // }
     }
 
-    // function serverInfo(ws){
-    //     let obj;
-    //     if (ws['room'] !== undefined){
-    //         obj = {
-    //             'type': 'info',
-    //             'params': {
-    //                 'room': ws['room'],
-    //                 'clients': rooms.get(ws['room']).length,
-    //             }
-    //         };
-    //     }
-    //     else {
-    //         obj = {
-    //             'type': 'info',
-    //             'params': {
-    //                 'room': 'no room',
-    //             }
-    //         };
-    //     }
-    //     ws.send(JSON.stringify(obj));
-    // }
+    async function chat(params: ClientChatParams){
+        const { code: roomID, userID, username, content: message } = params;
+
+        const chatMessage = {
+            code: roomID,
+            userID: userID,
+            username: username,
+            content: message,
+            timestamp: Date.now(),
+        };
+
+        console.log(chatMessage);
+        roomData.get(roomID)!.chat.push(chatMessage);
+        roomData.get(roomID)!.combinedChatLogs.push(chatMessage);
+
+        broadcastChatUpdate(roomID);
+        
+    }
 });
 
 const interval = setInterval(() => {
@@ -555,7 +570,7 @@ function broadcastRoomUpdate(roomID: string) {
                     buzz: roomData.get(roomID)!.buzz,
                     hostID: roomData.get(roomID)!.hostID,
                     users: JSON.stringify(Array.from(users.get(roomID)!)),
-                    logs: logs.get(roomID),
+                    chatLogs: roomData.get(roomID)!.combinedChatLogs,
                 },
             })
         );
@@ -570,7 +585,21 @@ function broadcastUserUpdate(roomID: string) {
                 params: {
                     code: roomID,
                     users: JSON.stringify(Array.from(users.get(roomID)!)),
-                    logs: logs.get(roomID),
+                    chatLogs: roomData.get(roomID)!.combinedChatLogs,
+                },
+            })
+        );
+    }
+}
+
+function broadcastChatUpdate(roomID: string) {
+    for (const client of roomConnections.get(roomID)!.values()) {
+        client.send(
+            JSON.stringify({
+                type: 'chatUpdate',
+                params: {
+                    code: roomID,
+                    chatLogs: roomData.get(roomID)!.combinedChatLogs,
                 },
             })
         );

@@ -4,15 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=packages\\frontend\" \"npm run dev --workspace=packages\\backend\"",
+    "dev": "concurrently \"npm run dev --workspace=packages/frontend\" \"npm run dev --workspace=packages/backend\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "workspaces": [
-    "packages\\frontend",
-    "packages\\backend"
+    "packages/frontend",
+    "packages/backend"
   ],
   "devDependencies": {
     "concurrently": "^8.2.2",

@@ -1,5 +1,5 @@
 'use client';
-import { useRoom } from '../../../context/providers';
+import { useRoom } from '@/app/context/providers';
 import Logo from './Logo';
 
 const Navbar = () => {

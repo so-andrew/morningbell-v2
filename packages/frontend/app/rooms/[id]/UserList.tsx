@@ -56,7 +56,7 @@ export default function UserList(UserListData: {
                                 >
                                     <b>{element[1]}</b>
                                     {element[0] === host && (
-                                        <span> (Host)</span>
+                                        <span className='text-gray-400'> (Host)</span>
                                     )}
                                 </li>
                             );
@@ -73,7 +73,7 @@ export default function UserList(UserListData: {
                                 >
                                     <b>{element[1]}</b>
                                     {element[0] === host && (
-                                        <span> (Host)</span>
+                                        <span className='text-gray-400'> (Host)</span>
                                     )}
                                 </li>
                             );

@@ -75,6 +75,7 @@ export function useHomePageState() {
 export function AppContextProvider({
     children,
 }: AppContextProviderProps): JSX.Element {
+    // State relating to game rooms
     const [userID, setUserID] =
         localStorage && localStorage.getItem('uid')
             ? useState(localStorage.getItem('uid'))
@@ -82,30 +83,64 @@ export function AppContextProvider({
     const [username, setUsername] = useState('');
     const [roomID, setRoomID] = useState('');
     const [isReady, setIsReady] = useState(false);
+
+    // State relating to websockets
     const [val, setVal] = useState(null);
     const ws = useRef<WebSocket | null>(null);
+    const [waitingToReconnect, setWaitingToReconnect] = useState(false);
+
+    // State relating to landing page display
     const [pageState, setPageState] = useState('landing');
 
+
     useEffect(() => {
-        const socket = userID
+        console.log('Run');
+        if(waitingToReconnect){
+            console.log('Waiting to reconnect');
+            return;
+        }
+
+        if(!ws.current){
+            const socket = userID
             ? new WebSocket(`ws://localhost:8000?uid=${userID}`)
             : new WebSocket('ws://localhost:8000');
-        socket.onopen = () => {
-            console.log('WebSocket connection established');
-            setIsReady(true);
-        };
-        socket.onclose = () => {
-            console.log('WebSocket connection closed');
-            setIsReady(false);
-        };
-        socket.onmessage = (event) => setVal(event.data);
+            ws.current = socket;
+            console.log(ws.current);
 
-        ws.current = socket;
+            socket.onopen = () => {
+                console.log('WebSocket connection established');
+                setIsReady(true);
+            };
 
-        return () => {
-            socket.close();
-        };
-    }, []);
+            socket.onclose = () => {
+
+                if(ws.current){
+                    console.log('WebSocket connection closed due to failure');
+                } else {
+                    console.log('WebSocket connection closed by app component unmount');
+                    return;
+                }
+                
+                if(waitingToReconnect) {
+                    return;
+                }
+                
+                setIsReady(false);
+                console.log('WebSocket connection closed');
+
+                setWaitingToReconnect(true);
+
+                setTimeout(() => setWaitingToReconnect(false), 2000);
+            };
+            socket.onmessage = (event) => setVal(event.data);
+
+            return () => {
+                ws.current = null;
+                socket.close();
+            };
+        }
+        
+    }, [waitingToReconnect]);
 
     const ret = [isReady, val, ws.current?.send.bind(ws.current)];
 
