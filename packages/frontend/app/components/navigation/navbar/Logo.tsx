@@ -1,9 +1,14 @@
 'use client';
+import {
+    useHomePageState,
+    useRoom,
+    useUser,
+    useWs,
+} from '@/app/context/providers';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useHomePageState, useRoom, useUser, useWs } from '@/app/context/providers';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const Logo = () => {
     const { roomID, setRoomID } = useRoom();
@@ -27,22 +32,22 @@ const Logo = () => {
     }, []);
 
     function handleLandingClick() {
-        const url = `${pathname}`;
-        const found = url.match(re);
-        if(found){
-            setSendLeaveMessage(true);
-            setOldRoomID(found[1]);
-            console.log(found[1], userID);
-            send(JSON.stringify({
-                type: 'leave',
-                params: {
-                    code: found[1],
-                    userID: userID,
-                }
-            }));
-            setRoomID('');
-        }
-        
+        // const url = `${pathname}`;
+        // const found = url.match(re);
+        // if(found){
+        //     setSendLeaveMessage(true);
+        //     setOldRoomID(found[1]);
+        //     console.log(found[1], userID);
+        //     send(JSON.stringify({
+        //         type: 'leave',
+        //         params: {
+        //             code: found[1],
+        //             userID: userID,
+        //         }
+        //     }));
+        //     setRoomID('');
+        // }
+
         setPageState('landing');
     }
 
@@ -71,9 +76,13 @@ const Logo = () => {
                     alt='Morningbell logo'
                     width={width < 1024 ? '48' : '64'}
                     height={width < 1024 ? '48' : '64'}
-                    className='relative p-1 hover:animate-wiggle'
+                    className='hover:animate-wiggle relative p-1'
                 />
-                <span className={`self-center whitespace-nowrap text-xl ${ready ? 'text-green-600' : 'text-red-500'}`}>
+                <span
+                    className={`self-center whitespace-nowrap text-xl ${
+                        ready ? 'text-green-600' : 'text-red-500'
+                    }`}
+                >
                     Morningbell
                 </span>
             </Link>

@@ -1,11 +1,11 @@
 'use client';
 import React, {
+    ReactNode,
     createContext,
     useContext,
-    useState,
     useEffect,
     useRef,
-    ReactNode,
+    useState,
 } from 'react';
 
 type AppContextProviderProps = { children: ReactNode };
@@ -66,7 +66,7 @@ export function useHomePageState() {
     const context = useContext(HomePageContext);
     if (!context) {
         throw new Error(
-            'useHomePageState must be used within an AppContextProvider'
+            'useHomePageState must be used within an AppContextProvider',
         );
     }
     return context;
@@ -92,18 +92,18 @@ export function AppContextProvider({
     // State relating to landing page display
     const [pageState, setPageState] = useState('landing');
 
-
     useEffect(() => {
-        console.log('Run');
-        if(waitingToReconnect){
+        // Wait to reconnect
+        if (waitingToReconnect) {
             console.log('Waiting to reconnect');
             return;
         }
 
-        if(!ws.current){
+        // If no WebSocket connection, establish one
+        if (!ws.current) {
             const socket = userID
-            ? new WebSocket(`ws://localhost:8000?uid=${userID}`)
-            : new WebSocket('ws://localhost:8000');
+                ? new WebSocket(`ws://localhost:8000?uid=${userID}`)
+                : new WebSocket('ws://localhost:8000');
             ws.current = socket;
             console.log(ws.current);
 
@@ -113,24 +113,23 @@ export function AppContextProvider({
             };
 
             socket.onclose = () => {
-
-                if(ws.current){
+                if (ws.current) {
                     console.log('WebSocket connection closed due to failure');
                 } else {
-                    console.log('WebSocket connection closed by app component unmount');
+                    console.log(
+                        'WebSocket connection closed by app component unmount',
+                    );
                     return;
                 }
-                
-                if(waitingToReconnect) {
+
+                if (waitingToReconnect) {
                     return;
                 }
-                
+
                 setIsReady(false);
-                console.log('WebSocket connection closed');
-
+                //console.log('WebSocket connection closed');
                 setWaitingToReconnect(true);
-
-                setTimeout(() => setWaitingToReconnect(false), 2000);
+                setTimeout(() => setWaitingToReconnect(false), 3000);
             };
             socket.onmessage = (event) => setVal(event.data);
 
@@ -139,7 +138,6 @@ export function AppContextProvider({
                 socket.close();
             };
         }
-        
     }, [waitingToReconnect]);
 
     const ret = [isReady, val, ws.current?.send.bind(ws.current)];

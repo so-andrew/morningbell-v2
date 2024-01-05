@@ -2,14 +2,14 @@ import { WebSocket, WebSocketServer } from 'ws';
 //const dbProvider = 'mongo';
 // import { connectToMongoDB } from './mongo.mjs';
 // import { GameRoom } from './schemas/gameroom.mjs';
-import { v4 as uuidv4 } from 'uuid';
 import url from 'url';
+import { v4 as uuidv4 } from 'uuid';
 import {
+    ChatMessage,
     ClientBuzzParams,
+    ClientChatParams,
     ClientJoinParams,
     ClientLeaveParams,
-    ClientChatParams,
-    ChatMessage,
     LogMessage,
     RoomData,
 } from '../frontend/types/WebSocketMessage';
@@ -28,11 +28,11 @@ const users = new Map<string, Map<string, string>>();
 const logs = new Map<string, Array<LogMessage>>();
 
 wss.on('connection', (ws, req) => {
-    const params = url.parse(req.url, true);
+    const params = url.parse(req.url as string, true);
     //console.log(params);
 
     // Assign uid by either receiving from connection request or assigning a new one
-    const uuid = params && params.query.uid ? params.query.uid : uuidv4();
+    const uuid = params && params.query.uid ? params.query.uid as string : uuidv4();
 
     console.log(`Number of connected clients: ${wss.clients.size}`);
     console.log(`userID: ${uuid}`);
@@ -42,7 +42,7 @@ wss.on('connection', (ws, req) => {
             params: {
                 userID: uuid,
             },
-        })
+        }),
     );
 
     ws.isAlive = true;
@@ -68,8 +68,6 @@ wss.on('connection', (ws, req) => {
 		- chat (optional, might implement after core functionality)
 			- params: roomID, userID, message
 		- invalidJoin (server -> client)
-		- serverInfo (server -> client):
-			- sends server information (i.e. room ID) to client
 	*/
 
     ws.on('message', async (data) => {
@@ -120,7 +118,7 @@ wss.on('connection', (ws, req) => {
                     console.log(`Room ${roomID} is empty, deleting room`);
                     roomConnections.delete(roomID);
                 }
-            }
+            },
         );
         console.log(`Number of connected clients: ${wss.clients.size}`);
         console.log(`Number of rooms: ${roomConnections.size}`);
@@ -140,7 +138,7 @@ wss.on('connection', (ws, req) => {
                     code: roomID,
                     hostID: uuid,
                 },
-            })
+            }),
         );
     }
 
@@ -151,7 +149,7 @@ wss.on('connection', (ws, req) => {
         if (!roomConnections.has(roomID)) {
             console.warn(`Room ${roomID} does not exist`);
             ws.send(
-                JSON.stringify({ type: 'error', error: 'roomDoesNotExist' })
+                JSON.stringify({ type: 'error', error: 'roomDoesNotExist' }),
             );
             return;
         }
@@ -163,6 +161,14 @@ wss.on('connection', (ws, req) => {
             return;
         }
 
+        for(const name of users.get(roomID)!.values()){
+            if(username === name){
+                console.warn(`Username ${username} already taken.`);
+                ws.send(JSON.stringify({ type: 'error', error: 'usernameTaken'}));
+                return;
+            }
+        }
+
         // Add user to collection
         if (!roomConnections.get(roomID)!.has(uuid)) {
             roomConnections.get(roomID)!.set(uuid, ws); // Add socket to connection map
@@ -172,7 +178,7 @@ wss.on('connection', (ws, req) => {
                 code: roomID,
                 content: `${users.get(roomID)!.get(uuid)} joined the room.`,
                 timestamp: Date.now(),
-            }
+            };
             logs.get(roomID)!.push(log);
             roomData.get(roomID)!.combinedChatLogs.push(log);
         }
@@ -185,7 +191,7 @@ wss.on('connection', (ws, req) => {
                 params: {
                     code: roomID,
                 },
-            })
+            }),
         );
 
         // Broadcast update to all connected clients in room
@@ -284,7 +290,7 @@ wss.on('connection', (ws, req) => {
             roomData.get(roomID)!.hostID = uuid; // Set host UUID
             const log = {
                 code: roomID,
-                content:`${users.get(roomID)!.get(uuid)} joined the room.`,
+                content: `${users.get(roomID)!.get(uuid)} joined the room.`,
                 timestamp: Date.now(),
             };
             logs.get(roomID)!.push(log);
@@ -299,7 +305,7 @@ wss.on('connection', (ws, req) => {
                 params: {
                     code: roomID,
                 },
-            })
+            }),
         );
 
         // Broadcast update to all connected clients in room
@@ -351,8 +357,8 @@ wss.on('connection', (ws, req) => {
         //     (userID) => userID !== params.userID
         // );
 
-        console.log(`leave message received from ${params.userID}`);
-        console.log(params);
+        // console.log(`leave message received from ${params.userID}`);
+        // console.log(params);
 
         if (!users.has(roomID)) {
             console.log(`Room ${roomID} does not exist, returning...`);
@@ -366,10 +372,10 @@ wss.on('connection', (ws, req) => {
                     code: roomID,
                     content: `${users.get(roomID)!.get(key)} left the room.`,
                     timestamp: Date.now(),
-                }
+                };
                 logs.get(roomID)!.push(log);
                 roomData.get(roomID)!.combinedChatLogs.push(log);
-                
+
                 users.get(roomID)!.delete(key);
                 roomConnections.get(roomID)!.delete(key);
             }
@@ -378,7 +384,6 @@ wss.on('connection', (ws, req) => {
 
         // Send message to clients
         broadcastUserUpdate(roomID);
-        
 
         //if (!roomConnections.get(roomID).has(uuid)) return;
         if (roomConnections.get(roomID)!.size === 0) {
@@ -433,7 +438,7 @@ wss.on('connection', (ws, req) => {
                             buzzerLocked: roomData.get(roomID)!.buzzerLocked,
                             buzz: roomData.get(roomID)!.buzz,
                         },
-                    })
+                    }),
                 );
             }
         } else {
@@ -481,7 +486,7 @@ wss.on('connection', (ws, req) => {
                             buzzerLocked: roomData.get(roomID)!.buzzerLocked,
                             buzz: roomData.get(roomID)!.buzz,
                         },
-                    })
+                    }),
                 );
             }
         } else {
@@ -501,7 +506,7 @@ wss.on('connection', (ws, req) => {
         // }
     }
 
-    async function chat(params: ClientChatParams){
+    async function chat(params: ClientChatParams) {
         const { code: roomID, userID, username, content: message } = params;
 
         const chatMessage = {
@@ -517,7 +522,6 @@ wss.on('connection', (ws, req) => {
         roomData.get(roomID)!.combinedChatLogs.push(chatMessage);
 
         broadcastChatUpdate(roomID);
-        
     }
 });
 
@@ -572,7 +576,7 @@ function broadcastRoomUpdate(roomID: string) {
                     users: JSON.stringify(Array.from(users.get(roomID)!)),
                     chatLogs: roomData.get(roomID)!.combinedChatLogs,
                 },
-            })
+            }),
         );
     }
 }
@@ -587,7 +591,7 @@ function broadcastUserUpdate(roomID: string) {
                     users: JSON.stringify(Array.from(users.get(roomID)!)),
                     chatLogs: roomData.get(roomID)!.combinedChatLogs,
                 },
-            })
+            }),
         );
     }
 }
@@ -601,7 +605,7 @@ function broadcastChatUpdate(roomID: string) {
                     code: roomID,
                     chatLogs: roomData.get(roomID)!.combinedChatLogs,
                 },
-            })
+            }),
         );
     }
 }
@@ -616,7 +620,7 @@ function roomCodeGen(length: number) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     for (let i = 0; i < length; i++) {
         result += characters.charAt(
-            Math.floor(Math.random() * characters.length)
+            Math.floor(Math.random() * characters.length),
         );
     }
     return result;

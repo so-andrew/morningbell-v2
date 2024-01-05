@@ -5,26 +5,27 @@ import {
     useUser,
     useWs,
 } from '@/app/context/providers';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import UserList from './UserList';
-import Chat from './Chat';
-import HostUserList from './HostList';
 import {
     ChatMessage,
+    LogMessage,
     UpdateBuzzerParams,
     UpdateChatParams,
     UpdateRoomParams,
     UpdateUserParams,
 } from '@/types/WebSocketMessage';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Chat from './Chat';
+import HostUserList from './HostList';
+import UserList from './UserList';
 
 export default function Room() {
     const router = useRouter();
 
     // State from providers
     const { roomID, setRoomID } = useRoom();
-    const { userID, setUserID, username, setUsername } = useUser();
+    const { userID, username, setUsername } = useUser();
     const { pageState, setPageState } = useHomePageState();
     const [ready, val, send] = useWs();
 
@@ -33,7 +34,9 @@ export default function Room() {
     const [buzzerLocked, setBuzzerLocked] = useState(false);
     const [buzz, setBuzz] = useState('');
     const [host, setHost] = useState('');
-    const [chatLogs, setChatLogs] = useState<Array<LogMessage | ChatMessage>>([]);
+    const [chatLogs, setChatLogs] = useState<Array<LogMessage | ChatMessage>>(
+        [],
+    );
 
     const [showErrorMessage, setShowErrorMessage] = useState(false);
     const [audio] = useState(new Audio('/bell.mp3'));
@@ -42,34 +45,46 @@ export default function Room() {
     let showErrorMessageTimeout: NodeJS.Timeout | null = null;
 
     useEffect(() => {
-        //console.log(`Room ${roomID}, user ${userID}`);
+        // If room has not loaded yet
         if (
             localStorage.getItem('roomInitialLoadFinished') === null ||
             localStorage.getItem('roomInitialLoadFinished') === 'false'
         ) {
-            localStorage.setItem('roomInitialLoadFinished', 'true');
-            //localStorage.setItem('uid', userID);
-            //localStorage.setItem('roomID', roomID);
-        } else {
-            if (!ready) {
-                // rerouteToHome = setTimeout(() => {
-                //     router.replace('/');
-                //     localStorage.setItem('roomInitialLoadFinished', 'false');
-                // }, 1000 * 10);
-
+            // Room has loaded, check if a previous room is still in browser history
+            if (localStorage.getItem('backButtonPressed') === 'true') {
+                // Go to main page and replace history entry with main page, preventing invalid entry into room
                 router.replace('/');
-                localStorage.setItem('roomInitialLoadFinished', 'false');
-                // send(
-                //     JSON.stringify({
-                //         type: 'leave',
-                //         params: {
-                //             roomID: localStorage.getItem('roomID'),
-                //             userID: localStorage.getItem('uuid'),
-                //         },
-                //     })
-                // );
+            } else {
+                // Room has successfully loaded
+                localStorage.setItem('roomInitialLoadFinished', 'true');
+            }
+        } else {
+            // If WebSocket is not in ready state for whatever reason
+            if (!ready) {
+                // Return to landing page
+                router.replace('/');
             }
         }
+
+        return () => {
+            // Cleanup function; send leave message to server
+            if (ready) {
+                send(
+                    JSON.stringify({
+                        type: 'leave',
+                        params: {
+                            code: roomID,
+                            userID: userID,
+                        },
+                    }),
+                );
+                setRoomID('');
+                // For handling back button presses (see check above)
+                localStorage.setItem('backButtonPressed', 'true');
+            } else {
+                console.log('WebSocket is not ready');
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -85,7 +100,6 @@ export default function Room() {
     }, [ready]);
 
     useEffect(() => {
-        //console.log(`Running useEffect, val = ${val}`);
         const lastMessage = JSON.parse(val);
         if (lastMessage) {
             switch (lastMessage.type) {
@@ -106,26 +120,11 @@ export default function Room() {
                     break;
                 default:
                     console.log(
-                        `Message with type ${lastMessage.type} received`
+                        `Message with type ${lastMessage.type} received`,
                     );
                     break;
             }
         }
-        // if (lastMessage && lastMessage.type === 'error') {
-        //     console.log(lastMessage.error);
-        // }
-        // if (lastMessage && lastMessage.type === 'roomUpdate') {
-        //     console.log(lastMessage.params);
-        //     updateRoom(lastMessage.params);
-        // }
-        // if (lastMessage && lastMessage.type === 'userUpdate') {
-        //     console.log(lastMessage.params);
-        //     updateUsers(lastMessage.params);
-        // }
-        // if (lastMessage && lastMessage.type === 'buzzerUpdate') {
-        //     //console.log(lastMessage.params);
-        //     updateBuzzer(lastMessage.params);
-        // }
     }, [val]);
 
     function updateRoom(params: UpdateRoomParams): void {
@@ -175,7 +174,7 @@ export default function Room() {
                             code: roomID,
                             userID: userID,
                         },
-                    })
+                    }),
                 );
             } else {
                 console.log('Buzzer is not locked');
@@ -190,7 +189,7 @@ export default function Room() {
                             code: roomID,
                             userID: userID,
                         },
-                    })
+                    }),
                 );
             }
         }
@@ -199,14 +198,14 @@ export default function Room() {
     return (
         <>
             {ready && (
-                <section className='grid lg:grid-cols-2 content-start items-start lg:items-center h-screen'>
+                <section className='grid h-screen content-start items-start lg:grid-cols-2 lg:items-center'>
                     <div className='m-auto'>
                         <button
                             className={`${
                                 buzzerLocked
                                     ? 'bg-red-500 hover:bg-red-700'
                                     : 'bg-blue-500 hover:bg-blue-700'
-                            } my-4 aspect-square min-h-40 lg:max-h-60 rounded-full text-2xl text-white text-center`}
+                            } my-4 aspect-square min-h-40 rounded-full text-center text-2xl text-white lg:max-h-60`}
                             onClick={handleBuzz}
                         >
                             {userID === host
@@ -216,7 +215,7 @@ export default function Room() {
                                   : 'Buzz'}
                         </button>
                     </div>
-                    <div>
+                    <>
                         {userID !== host && (
                             <UserList
                                 userList={userList}
@@ -234,27 +233,25 @@ export default function Room() {
                                 buzzedUser={buzz}
                             />
                         )}
-                    </div>
+                    </>
                     <div className='lg:col-start-2'>
-                        <Chat chatLogs={chatLogs}/>
+                        <Chat chatLogs={chatLogs} />
                     </div>
                 </section>
             )}
             {!ready && !showErrorMessage && (
-                <h2 className='mx-auto my-10 text-center text-white text-xl'>
+                <h2 className='mx-auto my-10 text-center text-xl text-white'>
                     Loading...
                 </h2>
             )}
             {!ready && showErrorMessage && (
-                <div className='mx-auto my-10 text-center text-white text-xl'>
-                    <p>
-                        Something went wrong.{' '}
-                        <Link className='text-blue-500' href='/'>
-                            Click here
-                        </Link>{' '}
-                        to go home.
-                    </p>
-                </div>
+                <p className='mx-auto my-10 text-center text-xl text-white'>
+                    Something went wrong.{' '}
+                    <Link className='text-blue-500' href='/'>
+                        Click here
+                    </Link>{' '}
+                    to go home.
+                </p>
             )}
         </>
     );

@@ -32,7 +32,7 @@ function Landing(params: { userID: string }) {
                     Create Room
                 </button>
                 <button
-                    className='bg-gray-500 rounded-md w-full px-16 py-6 text-xl hover:bg-gray-700'
+                    className='bg-gray-500 rounded-md w-full px-16 py-6 text-xl  hover:bg-gray-700'
                     onClick={handleJoinRoomButton}
                 >
                     Join Room

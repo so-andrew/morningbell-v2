@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useRoom, useUser, useWs, useHomePageState } from './context/providers';
-import Landing from './Landing';
+import { useEffect } from 'react';
 import CreatePage from './CreatePage';
 import JoinPage from './JoinPage';
+import Landing from './Landing';
+import { useHomePageState, useRoom, useUser, useWs } from './context/providers';
 
 export default function Home() {
     const { userID, setUserID } = useUser();
@@ -14,26 +14,30 @@ export default function Home() {
     useEffect(() => {
         if (ready) {
             console.log('WebSocket ready');
+            // If you are at the landing page, the app logic should not consider you as having previously loaded a room
             localStorage.setItem('roomInitialLoadFinished', 'false');
             console.log(`Room ID: ${roomID}`);
-            console.log(`Room ID from local storage: ${localStorage.getItem('roomID')}`);
-            if(roomID) {
-                send(JSON.stringify({
-                    type: 'leave',
-                    params: {
-                        code: roomID,
-                        userID: userID
-                    }
-                }));
-            }
-            localStorage.removeItem('roomID');
+            console.log(
+                `Room ID from local storage: ${localStorage.getItem('roomID')}`,
+            );
+            // if (roomID) {
+            //     send(
+            //         JSON.stringify({
+            //             type: 'leave',
+            //             params: {
+            //                 code: roomID,
+            //                 userID: userID,
+            //             },
+            //         }),
+            //     );
+            // }
+            // localStorage.removeItem('roomID');
         }
     }, [ready]);
 
     useEffect(() => {
         const lastMessage = JSON.parse(val);
         if (lastMessage && lastMessage.type === 'idAssignment') {
-            console.log(lastMessage.params.userID);
             setUserID(lastMessage.params.userID);
             localStorage.setItem('uid', lastMessage.params.userID);
         }
