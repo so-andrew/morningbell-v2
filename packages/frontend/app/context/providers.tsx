@@ -72,14 +72,27 @@ export function useHomePageState() {
     return context;
 }
 
+function getUIDFromLocalStorage(): string {
+    const uid = localStorage.getItem('uid');
+    console.log(uid);
+    return uid ? uid : '';
+}
+
 export function AppContextProvider({
     children,
-}: AppContextProviderProps): JSX.Element {
+}: AppContextProviderProps): React.JSX.Element {
     // State relating to game rooms
-    const [userID, setUserID] =
-        localStorage && localStorage.getItem('uid')
-            ? useState(localStorage.getItem('uid'))
-            : useState('');
+    const [userID, setUserID] = useState('');
+
+    useEffect(() => {
+        setUserID(getUIDFromLocalStorage());
+        localStorage.setItem('backButtonPressed', 'false');
+    }, []);
+
+    // const [userID, setUserID] =
+    //     localStorage && localStorage.getItem('uid')
+    //         ? useState(localStorage.getItem('uid'))
+    //         : useState('');
     const [username, setUsername] = useState('');
     const [roomID, setRoomID] = useState('');
     const [isReady, setIsReady] = useState(false);
@@ -101,8 +114,17 @@ export function AppContextProvider({
 
         // If no WebSocket connection, establish one
         if (!ws.current) {
-            const socket = userID
-                ? new WebSocket(`ws://localhost:8000?uid=${userID}`)
+            // console.log('in websocket creation, userID = ' + userID);
+            // console.log(
+            //     'in websocket creation, localstorage = ' +
+            //         getUIDFromLocalStorage(),
+            // );
+            const localUID = getUIDFromLocalStorage();
+            setUserID(localUID);
+            // console.log('in websocket creation, userID = ' + userID);
+
+            const socket = localUID
+                ? new WebSocket(`ws://localhost:8000?uid=${localUID}`)
                 : new WebSocket('ws://localhost:8000');
             ws.current = socket;
             console.log(ws.current);
