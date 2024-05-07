@@ -39,7 +39,11 @@ export default function Room() {
     );
 
     const [showErrorMessage, setShowErrorMessage] = useState(false);
-    const [audio] = useState(new Audio('/bell.mp3'));
+
+    const bell = new Audio('/bell.mp3');
+    bell.volume = 0.5;
+
+    const [audio] = useState(bell);
 
     //let rerouteToHome: NodeJS.Timeout | null = null;
     let showErrorMessageTimeout: NodeJS.Timeout | null = null;
