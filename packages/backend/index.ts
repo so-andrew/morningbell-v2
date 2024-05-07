@@ -32,7 +32,8 @@ wss.on('connection', (ws, req) => {
     //console.log(params);
 
     // Assign uid by either receiving from connection request or assigning a new one
-    const uuid = params && params.query.uid ? params.query.uid as string : uuidv4();
+    const uuid =
+        params && params.query.uid ? (params.query.uid as string) : uuidv4();
 
     console.log(`Number of connected clients: ${wss.clients.size}`);
     console.log(`userID: ${uuid}`);
@@ -161,10 +162,13 @@ wss.on('connection', (ws, req) => {
             return;
         }
 
-        for(const name of users.get(roomID)!.values()){
-            if(username === name){
+        // If name is already taken
+        for (const name of users.get(roomID)!.values()) {
+            if (username === name) {
                 console.warn(`Username ${username} already taken.`);
-                ws.send(JSON.stringify({ type: 'error', error: 'usernameTaken'}));
+                ws.send(
+                    JSON.stringify({ type: 'error', error: 'usernameTaken' }),
+                );
                 return;
             }
         }
@@ -387,7 +391,7 @@ wss.on('connection', (ws, req) => {
 
         //if (!roomConnections.get(roomID).has(uuid)) return;
         if (roomConnections.get(roomID)!.size === 0) {
-            console.log(`Closing room ${roomID}`);
+            console.log(`Closing room ${roomID} from leave`);
             //delete roomConnections[roomID];
             roomConnections.delete(roomID);
         }
@@ -545,7 +549,7 @@ const interval = setInterval(() => {
                 roomConnections.get(roomID)!.delete(userID);
                 broadcastRoomUpdate(roomID);
                 if (roomConnections.get(roomID)!.size === 0) {
-                    console.log(`Closing room ${roomID}`);
+                    console.log(`Closing room ${roomID} in interval`);
                     roomConnections.delete(roomID);
                 }
                 return socket.terminate();
