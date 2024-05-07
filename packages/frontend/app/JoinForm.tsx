@@ -38,14 +38,17 @@ export default function JoinForm() {
 
     useEffect(() => {
         const lastMessage = JSON.parse(val);
+        console.log(val);
         if (lastMessage && lastMessage.type === 'error') {
             //console.log(lastMessage.error);
             handleError(lastMessage.error);
             setIsLoading(false);
         }
         if (lastMessage && lastMessage.type === 'validJoin') {
-            //console.log(lastMessage.params);
-            //console.log(lastMessage.params.code);
+            setRoomID(lastMessage.params.code);
+            router.push(`/rooms/${lastMessage.params.code}`);
+        }
+        if (lastMessage && lastMessage.type === 'roomUpdate') {
             setRoomID(lastMessage.params.code);
             router.push(`/rooms/${lastMessage.params.code}`);
         }
