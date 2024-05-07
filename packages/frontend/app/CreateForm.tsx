@@ -1,6 +1,6 @@
 'use client';
-import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRoom, useUser, useWs } from './context/providers';
 
 export default function CreateForm() {
@@ -17,6 +17,7 @@ export default function CreateForm() {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        localStorage.setItem('backButtonPressed', 'false');
         setIsLoading(true);
         send(
             JSON.stringify({
@@ -26,7 +27,7 @@ export default function CreateForm() {
                     username: username,
                     userID: userID,
                 },
-            })
+            }),
         );
     };
 
@@ -45,9 +46,9 @@ export default function CreateForm() {
     return (
         <form className='flex flex-col items-center' onSubmit={handleSubmit}>
             <label>
-                <span className='block my-4 text-xl'>Username</span>
+                <span className='my-4 block text-xl'>Username</span>
                 <input
-                    className='text-black text-xl rounded-md px-4 py-3'
+                    className='rounded-md px-4 py-3 text-xl text-black'
                     required
                     type='text'
                     autoComplete='off'
@@ -57,7 +58,7 @@ export default function CreateForm() {
                 />
             </label>
             <button
-                className='bg-blue-500 rounded-md my-10 px-16 py-6 text-xl hover:bg-blue-700'
+                className='my-10 rounded-md bg-blue-500 px-16 py-6 text-xl hover:bg-blue-700'
                 disabled={isLoading}
             >
                 {isLoading && <span>Loading...</span>}
