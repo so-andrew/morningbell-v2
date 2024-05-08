@@ -4,12 +4,12 @@ import Navbar from './navbar';
 
 const Navigation = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const toggle = () => {
+    const Toggle = () => {
         setIsOpen(!isOpen);
     };
     return (
         <>
-            <Navbar toggle={toggle} />
+            <Navbar />
         </>
     );
 };
