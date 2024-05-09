@@ -1,4 +1,5 @@
 'use client';
+import { WebSocketMessage } from '@/types/WebSocketMessage';
 import React, {
     ReactNode,
     createContext,
@@ -27,15 +28,17 @@ type HomePageContext = {
     setPageState: React.Dispatch<React.SetStateAction<string>>;
 };
 
-// type WebSocketContext = {
-//     ready: boolean,
-//     val,
-//     send: () => {}
-// }
+type WSContext = {
+    ready: boolean;
+    val: WebSocketMessage;
+    send:
+        | ((data: string | ArrayBufferLike | Blob | ArrayBufferView) => void)
+        | undefined;
+};
 
 const UserContext = createContext<UserContext | null>(null);
 const RoomContext = createContext<RoomContext | null>(null);
-const WebSocketContext = createContext([false, null, () => {}]);
+const WebSocketContext = createContext<WSContext | undefined>(undefined);
 const HomePageContext = createContext<HomePageContext | null>(null);
 
 export const useRoom = () => {
@@ -98,7 +101,7 @@ export function AppContextProvider({
     const [isReady, setIsReady] = useState(false);
 
     // State relating to websockets
-    const [val, setVal] = useState(null);
+    const [val, setVal] = useState(null as unknown as WebSocketMessage);
     const ws = useRef<WebSocket | null>(null);
     const [waitingToReconnect, setWaitingToReconnect] = useState(false);
 
@@ -153,7 +156,10 @@ export function AppContextProvider({
                 setWaitingToReconnect(true);
                 setTimeout(() => setWaitingToReconnect(false), 3000);
             };
-            socket.onmessage = (event) => setVal(event.data);
+            socket.onmessage = (event) => {
+                console.log(event.data);
+                setVal(JSON.parse(event.data) as WebSocketMessage);
+            };
 
             return () => {
                 ws.current = null;
@@ -162,7 +168,18 @@ export function AppContextProvider({
         }
     }, [waitingToReconnect]);
 
-    const ret = [isReady, val, ws.current?.send.bind(ws.current)];
+    const ret: WSContext = {
+        ready: isReady,
+        val: val,
+        send: ws.current?.send.bind(ws.current),
+    };
+
+    console.log(ret);
+    // ret!.ready = isReady;
+    // ret!.val = val;
+    // ret!.send = ws.current?.send.bind(ws.current);
+
+    //const ret: WSContext = [isReady, val, ws.current?.send.bind(ws.current)];
 
     return (
         <WebSocketContext.Provider value={ret}>
