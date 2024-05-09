@@ -3,3 +3,7 @@ node_modules
 packages/.DS_Store
 .DS_Store
 .prettierrc
+.turbo
+build/**
+dist/**
+.next/**

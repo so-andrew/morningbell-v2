@@ -1,19 +1,102 @@
-type WebSocketUpdateType = 'roomUpdate' | 'userUpdate' | 'buzzerUpdate';
+type WebSocketRoomUpdateType =
+    | 'roomUpdate'
+    | 'userUpdate'
+    | 'buzzerUpdate'
+    | 'chatUpdate';
+
+type WebSocketClientMessageType = 'create' | 'join' | 'hostjoin' | 'buzz' | 'reset';
+
+type WebSocketServerUpdateType = 'error' | 'validJoin' | 'roomInfo' | 'idAssignment';
 
 export type WebSocketMessageType =
-    | (WebSocketUpdateType & 'create')
-    | 'join'
-    | 'hostjoin'
-    | 'buzz'
-    | 'reset'
-    | 'error';
+    | WebSocketRoomUpdateType
+    | WebSocketClientMessageType
+    | WebSocketServerUpdateType;
 
 export type WebSocketError = 'roomDoesNotExist' | 'roomIsFull';
 
-export type WebSocketMessage = {
-    type: WebSocketMessageType;
-    params?: UpdateRoomParams | UpdateBuzzerParams | UpdateUserParams;
-    error?: WebSocketError;
+// export type WebSocketMessage = {
+//     type: WebSocketMessageType;
+//     params?:
+//         | IdAssignmentParams
+//         | UpdateRoomParams
+//         | UpdateBuzzerParams
+//         | UpdateUserParams
+//         | UpdateChatParams;
+//     error?: WebSocketError;
+// };
+
+export type WebSocketMessage =
+    | IdAssignmentMessage
+    | UpdateRoomMessage
+    | UpdateBuzzerMessage
+    | UpdateUserMessage
+    | UpdateChatMessage
+    | ValidJoinMessage
+    | RoomInfoMessage
+    | ErrorMessage;
+
+type IdAssignmentMessage = {
+    type: 'idAssignment';
+    params: IdAssignmentParams;
+    error: undefined;
+};
+
+type UpdateRoomMessage = {
+    type: 'roomUpdate';
+    params: UpdateRoomParams;
+    error: undefined;
+};
+
+type UpdateBuzzerMessage = {
+    type: 'buzzerUpdate';
+    params: UpdateBuzzerParams;
+    error: undefined;
+};
+
+type UpdateUserMessage = {
+    type: 'userUpdate';
+    params: UpdateUserParams;
+    error: undefined;
+};
+
+type UpdateChatMessage = {
+    type: 'chatUpdate';
+    params: UpdateChatParams;
+    error: undefined;
+};
+
+type ValidJoinMessage = {
+    type: 'validJoin';
+    params: ValidJoinParams;
+};
+
+type RoomInfoMessage = {
+    type: 'roomInfo';
+    params: RoomInfoParams;
+};
+
+type ErrorMessage = {
+    type: 'error';
+    error: WebSocketError;
+};
+
+export type IdAssignmentParams = {
+    userID: string;
+};
+
+export type ValidJoinParams = {
+    code: string;
+};
+
+export type RoomInfoParams = {
+    code: string;
+    hostID: string;
+};
+
+export type BuzzerResetParams = {
+    code: string;
+    userID: string;
 };
 
 export type UpdateRoomParams = {
@@ -86,6 +169,7 @@ export type ChatMessage = {
 
 export type LogMessage = {
     code: string;
+    username?: undefined;
     content: string;
     timestamp: number;
 };

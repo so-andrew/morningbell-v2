@@ -1,5 +1,6 @@
 'use client';
 
+import { WebSocketMessage } from '@/types/WebSocketMessage';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import Alert from './components/alerts';
@@ -7,9 +8,9 @@ import { useRoom, useUser, useWs } from './context/providers';
 
 export default function JoinForm() {
     const [isLoading, setIsLoading] = useState(false);
-    const { roomID, setRoomID } = useRoom();
+    const { setRoomID } = useRoom();
     const { userID, username, setUsername } = useUser();
-    const [ready, val, send] = useWs();
+    const { ready, val, send } = useWs();
     const [roomIDInput, setRoomIDInput] = useState('');
     const [invalidRoomCode, setInvalidRoomCode] = useState(false);
     const [invalidUsername, setInvalidUsername] = useState(false);
@@ -21,7 +22,7 @@ export default function JoinForm() {
         localStorage.setItem('backButtonPressed', 'false');
         setIsLoading(true);
         if (ready) {
-            send(
+            send!(
                 JSON.stringify({
                     type: 'join',
                     params: {
@@ -37,20 +38,20 @@ export default function JoinForm() {
     };
 
     useEffect(() => {
-        const lastMessage = JSON.parse(val);
+        const lastMessage: WebSocketMessage = val;
         console.log(val);
         if (lastMessage && lastMessage.type === 'error') {
             //console.log(lastMessage.error);
-            handleError(lastMessage.error);
+            handleError(lastMessage.error!);
             setIsLoading(false);
         }
         if (lastMessage && lastMessage.type === 'validJoin') {
-            setRoomID(lastMessage.params.code);
-            router.push(`/rooms/${lastMessage.params.code}`);
+            setRoomID(lastMessage.params!.code);
+            router.push(`/rooms/${lastMessage.params!.code}`);
         }
         if (lastMessage && lastMessage.type === 'roomUpdate') {
-            setRoomID(lastMessage.params.code);
-            router.push(`/rooms/${lastMessage.params.code}`);
+            setRoomID(lastMessage.params!.code);
+            router.push(`/rooms/${lastMessage.params!.code}`);
         }
     }, [val]);
 

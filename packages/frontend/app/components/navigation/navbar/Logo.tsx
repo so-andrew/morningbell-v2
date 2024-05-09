@@ -1,25 +1,20 @@
 'use client';
-import {
-    useHomePageState,
-    useRoom,
-    useUser,
-    useWs,
-} from '@/app/context/providers';
+import { useHomePageState, useWs } from '@/app/context/providers';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+//import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const Logo = () => {
-    const { roomID, setRoomID } = useRoom();
-    const { userID, setUserID } = useUser();
-    const { pageState, setPageState } = useHomePageState();
-    const [ready, val, send] = useWs();
-    const pathname = usePathname();
+    //const { roomID, setRoomID } = useRoom();
+    //const { userID, setUserID } = useUser();
+    const { setPageState } = useHomePageState();
+    const { ready } = useWs();
+    //const pathname = usePathname();
 
-    const [sendLeaveMessage, setSendLeaveMessage] = useState(false);
-    const [oldRoomID, setOldRoomID] = useState('');
-    const re = /\/rooms\/(\w+)/;
+    // const [sendLeaveMessage, setSendLeaveMessage] = useState(false);
+    // const [oldRoomID, setOldRoomID] = useState('');
+    // const re = /\/rooms\/(\w+)/;
 
     const [width, setWidth] = useState(0);
     const updateWidth = () => {

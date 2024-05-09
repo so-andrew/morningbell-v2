@@ -1,10 +1,5 @@
 'use client';
-import {
-    useHomePageState,
-    useRoom,
-    useUser,
-    useWs,
-} from '@/app/context/providers';
+import { useRoom, useUser, useWs } from '@/app/context/providers';
 import {
     ChatMessage,
     LogMessage,
@@ -12,6 +7,7 @@ import {
     UpdateChatParams,
     UpdateRoomParams,
     UpdateUserParams,
+    WebSocketMessage,
 } from '@/types/WebSocketMessage';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,9 +21,9 @@ export default function Room() {
 
     // State from providers
     const { roomID, setRoomID } = useRoom();
-    const { userID, username, setUsername } = useUser();
-    const { pageState, setPageState } = useHomePageState();
-    const [ready, val, send] = useWs();
+    const { userID, username } = useUser();
+    //const { pageState, setPageState } = useHomePageState();
+    const { ready, val, send } = useWs();
 
     // State for game room
     const [userList, setUserList] = useState([]);
@@ -73,7 +69,7 @@ export default function Room() {
         return () => {
             // Cleanup function; send leave message to server
             if (ready) {
-                send(
+                send!(
                     JSON.stringify({
                         type: 'leave',
                         params: {
@@ -104,7 +100,7 @@ export default function Room() {
     }, [ready]);
 
     useEffect(() => {
-        const lastMessage = JSON.parse(val);
+        const lastMessage: WebSocketMessage = val;
         if (lastMessage) {
             switch (lastMessage.type) {
                 case 'error':
@@ -171,7 +167,7 @@ export default function Room() {
     function handleBuzz() {
         if (userID === host) {
             if (buzzerLocked) {
-                send(
+                send!(
                     JSON.stringify({
                         type: 'reset',
                         params: {
@@ -186,7 +182,7 @@ export default function Room() {
         } else {
             if (!buzzerLocked) {
                 audio.play();
-                send(
+                send!(
                     JSON.stringify({
                         type: 'buzz',
                         params: {

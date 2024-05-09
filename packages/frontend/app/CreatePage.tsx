@@ -1,30 +1,33 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useWs, useRoom, useHomePageState } from './context/providers';
-import CreateForm from './CreateForm';
+import { WebSocketMessage } from '@/types/WebSocketMessage';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useHomePageState, useRoom, useWs } from './context/providers';
+import CreateForm from './CreateForm';
 
 function CreatePage() {
-    const [ready, val, send] = useWs();
+    const { val, send } = useWs();
     const { roomID, setRoomID } = useRoom();
     const { setPageState } = useHomePageState();
 
     useEffect(() => {
-        send(
+        send!(
             JSON.stringify({
                 type: 'create',
-                params: null,
-            })
+            }),
         );
     }, []);
 
     useEffect(() => {
-        const lastMessage = JSON.parse(val);
+        //console.log('val = ' + val);
+        const lastMessage: WebSocketMessage = val;
+        //console.log('lastMessage = ' + lastMessage);
+        //console.log('lastMessage.type = ' + lastMessage.type);
         if (lastMessage && lastMessage.type === 'roomInfo') {
-            console.log('Room info received');
-            console.log(lastMessage);
-            setRoomID(lastMessage.params.code);
+            //console.log('Room info received');
+            //console.log(lastMessage);
+            setRoomID(lastMessage.params!.code);
         }
     }, [val]);
 
@@ -35,7 +38,7 @@ function CreatePage() {
 
     return (
         <section className='flex flex-col justify-center'>
-            <div className='mx-auto my-10 text-center text-white max-w-xl'>
+            <div className='mx-auto my-10 max-w-xl text-center text-white'>
                 <h1 className='my-6 text-3xl'>Create Room</h1>
                 {roomID && (
                     <p>

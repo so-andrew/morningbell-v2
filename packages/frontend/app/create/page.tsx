@@ -1,24 +1,25 @@
 'use client';
+import { WebSocketMessage } from '@/types/WebSocketMessage';
 import { useEffect } from 'react';
 import CreateForm from '../CreateForm';
-import { useRoom, useUser, useWs } from '../context/providers';
+import { useRoom, useWs } from '../context/providers';
 
 const Create = () => {
-    const [ready, val, send] = useWs();
+    const { val, send } = useWs();
     const { roomID, setRoomID } = useRoom();
     //const { userID, setUserID } = useUser();
 
     useEffect(() => {
-        send(
+        send!(
             JSON.stringify({
                 type: 'create',
                 params: null,
-            })
+            }),
         );
     }, []);
 
     useEffect(() => {
-        const lastMessage = JSON.parse(val);
+        const lastMessage: WebSocketMessage = val;
         if (lastMessage && lastMessage.type === 'roomInfo') {
             console.log('Room info received');
             console.log(lastMessage);
@@ -28,7 +29,7 @@ const Create = () => {
 
     return (
         <section className='flex flex-col justify-center'>
-            <div className='mx-auto my-10 text-center text-white max-w-xl'>
+            <div className='mx-auto my-10 max-w-xl text-center text-white'>
                 <h1 className='my-6 text-3xl'>Create Room</h1>
                 {roomID && (
                     <p>

@@ -2,9 +2,12 @@ import { WebSocket, WebSocketServer } from 'ws';
 //const dbProvider = 'mongo';
 // import { connectToMongoDB } from './mongo.mjs';
 // import { GameRoom } from './schemas/gameroom.mjs';
+import { customAlphabet } from 'nanoid';
 import url from 'url';
 import { v4 as uuidv4 } from 'uuid';
+
 import {
+    BuzzerResetParams,
     ChatMessage,
     ClientBuzzParams,
     ClientChatParams,
@@ -19,6 +22,9 @@ const maxClients = 64;
 
 // MongoDB connection
 // connectToMongoDB();
+
+// Configure nanoid
+const nanoid = customAlphabet('123456789ABCDEFGHJKLMNPQRSTUVWXYZ', 5);
 
 // Create WebSocket server
 const wss = new WebSocketServer({ port: 8000 });
@@ -76,6 +82,8 @@ wss.on('connection', (ws, req) => {
         const type = obj.type;
         const params = obj.params;
 
+        console.log(obj);
+
         switch (type) {
             case 'create':
                 await create();
@@ -126,7 +134,8 @@ wss.on('connection', (ws, req) => {
     });
 
     async function create() {
-        const roomID = roomCodeGen(5);
+        const roomID = nanoid();
+        console.log(roomID);
 
         // const res = await GameRoom.insertMany(gameRoom);
         // console.log(res);
@@ -474,7 +483,7 @@ wss.on('connection', (ws, req) => {
         // }
     }
 
-    async function resetBuzzer(params) {
+    async function resetBuzzer(params: BuzzerResetParams) {
         const roomID = params.code;
 
         if (params.userID === roomData.get(roomID)!.hostID) {
@@ -619,13 +628,13 @@ function heartbeat() {
     console.log('Received pong');
 }
 
-function roomCodeGen(length: number) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(
-            Math.floor(Math.random() * characters.length),
-        );
-    }
-    return result;
-}
+// function roomCodeGen(length: number) {
+//     let result = '';
+//     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+//     for (let i = 0; i < length; i++) {
+//         result += characters.charAt(
+//             Math.floor(Math.random() * characters.length),
+//         );
+//     }
+//     return result;
+// }

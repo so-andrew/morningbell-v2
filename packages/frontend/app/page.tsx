@@ -1,4 +1,5 @@
 'use client';
+import { WebSocketMessage } from '@/types/WebSocketMessage';
 import { useEffect } from 'react';
 import CreatePage from './CreatePage';
 import JoinPage from './JoinPage';
@@ -8,8 +9,8 @@ import { useHomePageState, useRoom, useUser, useWs } from './context/providers';
 export default function Home() {
     const { userID, setUserID } = useUser();
     const { roomID, setRoomID } = useRoom();
-    const { pageState, setPageState } = useHomePageState();
-    const [ready, val, send] = useWs();
+    const { pageState } = useHomePageState();
+    const { ready, val } = useWs();
 
     useEffect(() => {
         if (ready) {
@@ -36,10 +37,10 @@ export default function Home() {
     }, [ready]);
 
     useEffect(() => {
-        const lastMessage = JSON.parse(val);
+        const lastMessage: WebSocketMessage = val;
         if (lastMessage && lastMessage.type === 'idAssignment') {
-            setUserID(lastMessage.params.userID);
-            localStorage.setItem('uid', lastMessage.params.userID);
+            setUserID(lastMessage.params!.userID);
+            localStorage.setItem('uid', lastMessage.params!.userID);
         }
     }, [val]);
 
