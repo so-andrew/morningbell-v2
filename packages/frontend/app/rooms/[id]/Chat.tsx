@@ -5,54 +5,68 @@ import { ChatMessage, LogMessage } from '@/types/WebSocketMessage';
 import { FormEvent, useState } from 'react';
 import ChatMessageItem from './ChatMessage';
 
-export default function Chat(params: { chatLogs: Array<LogMessage | ChatMessage> }) {
+export default function Chat(params: {
+    chatLogs: Array<LogMessage | ChatMessage>;
+}) {
     const { chatLogs } = params;
 
     const [chatMessageInput, setChatMessageInput] = useState('');
     const { roomID } = useRoom();
     const { userID, username } = useUser();
-    const [ready, val, send] = useWs();
+    const { ready, send } = useWs();
 
     const handleMessageSend = (e: FormEvent) => {
         e.preventDefault();
-        if(chatMessageInput.length === 0) return;
+        if (chatMessageInput.length === 0) return;
         if (ready) {
-            send(
+            send!(
                 JSON.stringify({
                     type: 'chat',
                     params: {
                         code: roomID,
                         userID: userID,
                         username: username,
-                        content: chatMessageInput
-                    }
-                })
+                        content: chatMessageInput,
+                    },
+                }),
             );
-        }
-        else console.log('WebSocket is not ready');
+        } else console.log('WebSocket is not ready');
         setChatMessageInput('');
     };
 
     return (
-        <section className='flex flex-col items-center max-h-[50%]'>
-            <h2 className='text-white text-center text-xl font-bold my-6 mx-auto'>
+        <section className='flex max-h-[50%] flex-col items-center'>
+            <h2 className='mx-auto my-6 text-center text-xl font-bold text-white'>
                 Chat
             </h2>
-            <section className='flex flex-col items-center w-[90%] md:max-w-lg bg-white rounded-lg'>
-                <section className='flex flex-col bg-white my-2 py-2 mx-auto w-[90%] max-h-48 gap-1 overflow-y-auto'>
+            <section className='flex w-[90%] flex-col items-center rounded-lg bg-white md:max-w-lg'>
+                <section className='mx-auto my-2 flex max-h-48 w-[90%] flex-col gap-1 overflow-y-auto bg-white py-2'>
                     {chatLogs.map((element, index) => {
                         return (
-                            <ChatMessageItem key={index} element={element}/>
+                            <ChatMessageItem key={index} element={element} />
                         );
                     })}
                 </section>
-                <form className='flex flex-row py-2 w-[90%] bg-white gap-4' onSubmit={handleMessageSend}>
+                <form
+                    className='flex w-[90%] flex-row gap-4 bg-white py-2'
+                    onSubmit={handleMessageSend}
+                >
                     <label className='w-full'>
-                        <input className='text-black py-2 px-4 rounded-md w-full' type='text' autoComplete='off' placeholder='Send a message' maxLength={250} onChange={(e) => {
-                            setChatMessageInput(e.target.value);
-                        }} value={chatMessageInput}></input>
+                        <input
+                            className='w-full rounded-md px-4 py-2 text-black'
+                            type='text'
+                            autoComplete='off'
+                            placeholder='Send a message'
+                            maxLength={250}
+                            onChange={(e) => {
+                                setChatMessageInput(e.target.value);
+                            }}
+                            value={chatMessageInput}
+                        ></input>
                     </label>
-                    <button className='bg-blue-500 hover:bg-blue-700 rounded-md px-4 py-2 text-white'>Send</button>
+                    <button className='rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-700'>
+                        Send
+                    </button>
                 </form>
             </section>
         </section>

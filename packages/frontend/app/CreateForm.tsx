@@ -1,4 +1,5 @@
 'use client';
+import { WebSocketMessage } from '@/types/WebSocketMessage';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { useRoom, useUser, useWs } from './context/providers';
@@ -6,8 +7,8 @@ import { useRoom, useUser, useWs } from './context/providers';
 export default function CreateForm() {
     const [isLoading, setIsLoading] = useState(false);
     const { roomID, setRoomID } = useRoom();
-    const { userID, setUserID, username, setUsername } = useUser();
-    const [ready, val, send] = useWs();
+    const { userID, username, setUsername } = useUser();
+    const { val, send } = useWs();
     const router = useRouter();
 
     // const WS_URL = 'ws://localhost:4000';
@@ -19,7 +20,7 @@ export default function CreateForm() {
         e.preventDefault();
         localStorage.setItem('backButtonPressed', 'false');
         setIsLoading(true);
-        send(
+        send!(
             JSON.stringify({
                 type: 'hostjoin',
                 params: {
@@ -32,14 +33,14 @@ export default function CreateForm() {
     };
 
     useEffect(() => {
-        const lastMessage = JSON.parse(val);
+        const lastMessage: WebSocketMessage = val;
         if (lastMessage && lastMessage.type === 'error') {
             console.log(lastMessage.error);
         }
         if (lastMessage && lastMessage.type === 'validJoin') {
             //console.log(lastMessage.params);
-            setRoomID(lastMessage.params.code);
-            router.push(`/rooms/${lastMessage.params.code}`);
+            setRoomID(lastMessage.params!.code);
+            router.push(`/rooms/${lastMessage.params!.code}`);
         }
     }, [val]);
 
