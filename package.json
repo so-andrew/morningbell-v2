@@ -13,8 +13,7 @@
     "author": "",
     "license": "ISC",
     "workspaces": [
-        "packages/frontend",
-        "packages/backend"
+        "packages/**"
     ],
     "devDependencies": {
         "concurrently": "^8.2.2",
