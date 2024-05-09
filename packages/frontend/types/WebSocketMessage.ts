@@ -1,20 +1,17 @@
-type WebSocketUpdateType =
+type WebSocketRoomUpdateType =
     | 'roomUpdate'
     | 'userUpdate'
     | 'buzzerUpdate'
     | 'chatUpdate';
 
+type WebSocketClientMessageType = 'create' | 'join' | 'hostjoin' | 'buzz' | 'reset';
+
+type WebSocketServerUpdateType = 'error' | 'validJoin' | 'roomInfo' | 'idAssignment';
+
 export type WebSocketMessageType =
-    | WebSocketUpdateType
-    | 'create'
-    | 'join'
-    | 'hostjoin'
-    | 'buzz'
-    | 'reset'
-    | 'error'
-    | 'validJoin'
-    | 'roomInfo'
-    | 'idAssignment';
+    | WebSocketRoomUpdateType
+    | WebSocketClientMessageType
+    | WebSocketServerUpdateType;
 
 export type WebSocketError = 'roomDoesNotExist' | 'roomIsFull';
 
