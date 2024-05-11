@@ -5,6 +5,8 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { customAlphabet } from 'nanoid';
 import url from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import { createServer } from 'https';
+import { readFileSync } from 'fs';
 
 import {
     BuzzerResetParams,
@@ -26,8 +28,17 @@ const maxClients = 64;
 // Configure nanoid
 const nanoid = customAlphabet('123456789ABCDEFGHJKLMNPQRSTUVWXYZ', 5);
 
+// Create server
+//const server = createServer({
+//	cert: readFileSync('/etc/letsencrypt/live/morningbell.app/fullchain.pem'),
+//	key: readFileSync('/etc/letsencrypt/live/morningbell.app/privkey.pem')
+//});
+
 // Create WebSocket server
-const wss = new WebSocketServer({ port: 8000 });
+const wss = new WebSocketServer({ 
+	port: 8000,
+	path: "/ws"
+});
 const roomConnections = new Map<string, Map<string, WebSocket>>();
 const roomData = new Map<string, RoomData>();
 const users = new Map<string, Map<string, string>>();
@@ -537,6 +548,10 @@ wss.on('connection', (ws, req) => {
         broadcastChatUpdate(roomID);
     }
 });
+
+//server.listen(8000, ()=>{
+//	console.log('Listening on http://0.0.0.0:8000');
+//});
 
 const interval = setInterval(() => {
     console.log('Running ping code');

@@ -126,9 +126,11 @@ export function AppContextProvider({
             setUserID(localUID);
             // console.log('in websocket creation, userID = ' + userID);
 
+            const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
+
             const socket = localUID
-                ? new WebSocket(`ws://localhost:8000?uid=${localUID}`)
-                : new WebSocket('ws://localhost:8000');
+                ? new WebSocket(`${protocol}://${window.location.host}/ws/?uid=${localUID}`)
+                : new WebSocket(`${protocol}://${window.location.host}/ws/`);
             ws.current = socket;
             console.log(ws.current);
 
@@ -173,13 +175,6 @@ export function AppContextProvider({
         val: val,
         send: ws.current?.send.bind(ws.current),
     };
-
-    console.log(ret);
-    // ret!.ready = isReady;
-    // ret!.val = val;
-    // ret!.send = ws.current?.send.bind(ws.current);
-
-    //const ret: WSContext = [isReady, val, ws.current?.send.bind(ws.current)];
 
     return (
         <WebSocketContext.Provider value={ret}>
