@@ -129,8 +129,8 @@ export function AppContextProvider({
             const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
 
             const socket = localUID
-                ? new WebSocket(`${protocol}://${window.location.host}:8010?uid=${localUID}`)
-                : new WebSocket(`${protocol}://${window.location.host}:8010`);
+                ? new WebSocket(`${protocol}://${window.location.host}/ws/?uid=${localUID}`)
+                : new WebSocket(`${protocol}://${window.location.host}/ws/`);
             ws.current = socket;
             console.log(ws.current);
 
