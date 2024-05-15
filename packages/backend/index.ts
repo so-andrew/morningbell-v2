@@ -1,12 +1,12 @@
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocketServer } from 'ws';
 //const dbProvider = 'mongo';
 // import { connectToMongoDB } from './mongo.mjs';
 // import { GameRoom } from './schemas/gameroom.mjs';
 import { customAlphabet } from 'nanoid';
 import url from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { createServer } from 'https';
-import { readFileSync } from 'fs';
+import { Socket } from './socket';
+import dotenv from 'dotenv';
 
 import {
     BuzzerResetParams,
@@ -19,6 +19,8 @@ import {
     RoomData,
 } from '../frontend/types/WebSocketMessage';
 
+dotenv.config();
+
 const maxClients = 64;
 //let rooms = new Map(); // Mapping room code to array of WebSockets
 
@@ -28,25 +30,20 @@ const maxClients = 64;
 // Configure nanoid
 const nanoid = customAlphabet('123456789ABCDEFGHJKLMNPQRSTUVWXYZ', 5);
 
-// Create server
-//const server = createServer({
-//	cert: readFileSync('/etc/letsencrypt/live/morningbell.app/fullchain.pem'),
-//	key: readFileSync('/etc/letsencrypt/live/morningbell.app/privkey.pem')
-//});
-
 // Create WebSocket server
+const wsPath = process.env.NODE_ENV === 'development' ? '/ws/' : '/ws';
+
 const wss = new WebSocketServer({ 
 	port: 8000,
-	path: "/ws"
+	path: wsPath
 });
-const roomConnections = new Map<string, Map<string, WebSocket>>();
+const roomConnections = new Map<string, Map<string, Socket>>();
 const roomData = new Map<string, RoomData>();
 const users = new Map<string, Map<string, string>>();
 const logs = new Map<string, Array<LogMessage>>();
 
-wss.on('connection', (ws, req) => {
+wss.on('connection', (ws:Socket, req) => {
     const params = url.parse(req.url as string, true);
-    //console.log(params);
 
     // Assign uid by either receiving from connection request or assigning a new one
     const uuid =
@@ -64,29 +61,9 @@ wss.on('connection', (ws, req) => {
     );
 
     ws.isAlive = true;
+    ws.userID = uuid;
     ws.on('error', console.error);
     ws.on('pong', heartbeat);
-
-    /* List of messages
-		- create (client -> server): 
-			- generates room with unique code, adds it to database, sends to room creator
-			- params: N/A
-		- join (client -> server):
-			- Adds user WebSocket connection to room
-			- params: userID, username, roomCode
-		- hostjoin (client -> server):
-			- Adds host WebSocket connection to room
-			- params: hostID, username, roomCode
-		- buzz (client -> server):
-			- Event sent when player hits the buzzer; upon receipt, server should send lock message to all connected clients
-			- params: roomID, userID
-		- reset (client -> server):
-			- Event sent when host resets buzzer; upon receipt, server should send reset message to all connected clients
-			- params: roomID, userID
-		- chat (optional, might implement after core functionality)
-			- params: roomID, userID, message
-		- invalidJoin (server -> client)
-	*/
 
     ws.on('message', async (data) => {
         const obj = JSON.parse(data.toString());
@@ -126,7 +103,7 @@ wss.on('connection', (ws, req) => {
     ws.on('close', () => {
         console.log('Closing connection');
         roomConnections.forEach(
-            (room: Map<string, WebSocket>, roomID: string) => {
+            (room: Map<string, Socket>, roomID: string) => {
                 if (room.has(uuid)) {
                     console.log(`Removing user ${uuid} from room ${roomID}`);
                     room.delete(uuid);
@@ -278,7 +255,7 @@ wss.on('connection', (ws, req) => {
 
         // Update in-memory collections
         if (!roomConnections.has(roomID)) {
-            roomConnections.set(roomID, new Map<string, WebSocket>());
+            roomConnections.set(roomID, new Map<string, Socket>());
         }
         if (!roomData.has(roomID)) {
             roomData.set(roomID, gameRoom);
@@ -446,8 +423,6 @@ wss.on('connection', (ws, req) => {
 
     async function buzz(params: ClientBuzzParams) {
         const { code: roomID, userID: buzz } = params;
-        //console.log(params);
-        //console.log(roomData.get(roomID));
 
         if (!roomData.get(roomID)!.buzzerLocked) {
             roomData.get(roomID)!.buzzerLocked = true;
@@ -549,13 +524,9 @@ wss.on('connection', (ws, req) => {
     }
 });
 
-//server.listen(8000, ()=>{
-//	console.log('Listening on http://0.0.0.0:8000');
-//});
-
 const interval = setInterval(() => {
-    console.log('Running ping code');
-    // wss.clients.forEach((ws) => {
+    // console.log('Running ping code');
+    // (wss.clients as Set<Socket>).forEach((ws:Socket) => {
     //     if (!ws.isAlive){
     //         console.log(`Terminating connection ${ws['userID']}`);
     //         return ws.terminate();
@@ -568,6 +539,7 @@ const interval = setInterval(() => {
     // Check every room for disconnected clients
     for (const [roomID, room] of roomConnections.entries()) {
         for (const [userID, socket] of room.entries()) {
+            console.log(socket.userID);
             if (!socket.isAlive) {
                 console.log(`Terminating connection ${userID}`);
                 roomConnections.get(roomID)!.delete(userID);
@@ -583,7 +555,6 @@ const interval = setInterval(() => {
             socket.ping();
         }
     }
-    //console.log(roomConnections);
 }, 30000);
 
 wss.on('close', () => {
@@ -642,14 +613,3 @@ function heartbeat() {
     this.isAlive = true;
     console.log('Received pong');
 }
-
-// function roomCodeGen(length: number) {
-//     let result = '';
-//     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-//     for (let i = 0; i < length; i++) {
-//         result += characters.charAt(
-//             Math.floor(Math.random() * characters.length),
-//         );
-//     }
-//     return result;
-// }
