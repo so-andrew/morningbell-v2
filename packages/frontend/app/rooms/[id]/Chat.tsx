@@ -15,7 +15,7 @@ export default function Chat(params: {
     const { roomID } = useRoom();
     const { userID, username } = useUser();
     const { ready, send } = useWs();
-    const containerRef = useRef(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const element = containerRef.current;
