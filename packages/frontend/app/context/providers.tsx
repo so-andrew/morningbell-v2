@@ -117,20 +117,24 @@ export function AppContextProvider({
 
         // If no WebSocket connection, establish one
         if (!ws.current) {
-            // console.log('in websocket creation, userID = ' + userID);
-            // console.log(
-            //     'in websocket creation, localstorage = ' +
-            //         getUIDFromLocalStorage(),
-            // );
             const localUID = getUIDFromLocalStorage();
             setUserID(localUID);
-            // console.log('in websocket creation, userID = ' + userID);
 
             const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
+            let socket;
 
-            const socket = localUID
+            console.log(process.env.NODE_ENV);
+            if(process.env.NODE_ENV === 'development'){
+                socket = localUID
+                ? new WebSocket(`ws://localhost:8000/ws/?uid=${localUID}`)
+                : new WebSocket('ws://localhost:8000/ws/');
+            }
+            else {
+                socket = localUID
                 ? new WebSocket(`${protocol}://${window.location.host}/ws/?uid=${localUID}`)
                 : new WebSocket(`${protocol}://${window.location.host}/ws/`);
+            }
+            
             ws.current = socket;
             console.log(ws.current);
 
@@ -154,7 +158,6 @@ export function AppContextProvider({
                 }
 
                 setIsReady(false);
-                //console.log('WebSocket connection closed');
                 setWaitingToReconnect(true);
                 setTimeout(() => setWaitingToReconnect(false), 3000);
             };
