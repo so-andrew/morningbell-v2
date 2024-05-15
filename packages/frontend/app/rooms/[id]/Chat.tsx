@@ -1,6 +1,7 @@
 'use client';
 
 import { useRoom, useUser, useWs } from '@/app/context/providers';
+import { useEffect, useRef } from 'react';
 import { ChatMessage, LogMessage } from '@/types/WebSocketMessage';
 import { FormEvent, useState } from 'react';
 import ChatMessageItem from './ChatMessage';
@@ -14,6 +15,15 @@ export default function Chat(params: {
     const { roomID } = useRoom();
     const { userID, username } = useUser();
     const { ready, send } = useWs();
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const element = containerRef.current;
+        if(element){
+            element.scrollTop = element.scrollHeight;
+        }
+    }, [chatLogs]);
+
 
     const handleMessageSend = (e: FormEvent) => {
         e.preventDefault();
@@ -34,13 +44,15 @@ export default function Chat(params: {
         setChatMessageInput('');
     };
 
+    
+
     return (
         <section className='flex max-h-[50%] flex-col items-center'>
             <h2 className='mx-auto my-6 text-center text-xl font-bold text-white'>
                 Chat
             </h2>
             <section className='flex w-[90%] flex-col items-center rounded-lg bg-white md:max-w-lg'>
-                <section className='mx-auto my-2 flex max-h-48 w-[90%] flex-col gap-1 overflow-y-auto bg-white py-2'>
+                <section className='mx-auto my-2 flex max-h-48 w-[90%] flex-col gap-1 overflow-y-auto bg-white py-2' ref={containerRef}>
                     {chatLogs.map((element, index) => {
                         return (
                             <ChatMessageItem key={index} element={element} />
