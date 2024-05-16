@@ -89,9 +89,12 @@ export default function Room() {
     }, []);
 
     useEffect(() => {
+        // Reset error display
         if (ready && showErrorMessageTimeout) {
             clearTimeout(showErrorMessageTimeout);
+            setShowErrorMessage(false);
         } else if (!ready) {
+            // Set error message timeout
             showErrorMessageTimeout = setTimeout(() => {
                 setShowErrorMessage(true);
                 //setPageState('landing');
