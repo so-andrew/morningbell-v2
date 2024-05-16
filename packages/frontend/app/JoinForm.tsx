@@ -49,6 +49,12 @@ export default function JoinForm() {
             setRoomID(lastMessage.params!.code);
             router.push(`/rooms/${lastMessage.params!.code}`);
         }
+        if (lastMessage && lastMessage.type === 'roomUpdate') {
+            if(localStorage.getItem('backButtonPressed') === 'false'){
+                setRoomID(lastMessage.params!.code);
+                router.push(`/rooms/${lastMessage.params!.code}`);
+            }
+        }
     }, [val]);
 
     useEffect(() => {
