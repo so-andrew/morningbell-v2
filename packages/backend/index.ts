@@ -361,7 +361,7 @@ wss.on('connection', (ws:Socket, req) => {
         // console.log(`leave message received from ${params.userID}`);
         // console.log(params);
 
-        if (!users.has(roomID)) {
+        if (!users.has(roomID) || !roomConnections.has(roomID) || !roomData.has(roomID)) {
             console.log(`Room ${roomID} does not exist, returning...`);
             return;
         }
@@ -563,6 +563,7 @@ wss.on('close', () => {
 });
 
 function broadcastRoomUpdate(roomID: string) {
+    if(!roomConnections.has(roomID)) return;
     for (const client of roomConnections.get(roomID)!.values()) {
         client.send(
             JSON.stringify({
@@ -581,6 +582,7 @@ function broadcastRoomUpdate(roomID: string) {
 }
 
 function broadcastUserUpdate(roomID: string) {
+    if(!roomConnections.has(roomID)) return;
     for (const client of roomConnections.get(roomID)!.values()) {
         client.send(
             JSON.stringify({
@@ -596,6 +598,7 @@ function broadcastUserUpdate(roomID: string) {
 }
 
 function broadcastChatUpdate(roomID: string) {
+    if(!roomConnections.has(roomID)) return;
     for (const client of roomConnections.get(roomID)!.values()) {
         client.send(
             JSON.stringify({
