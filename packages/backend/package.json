@@ -13,20 +13,28 @@
     "license": "ISC",
     "description": "Backend for Morningbell buzzer web app",
     "dependencies": {
+        "@types/sequelize": "^4.28.20",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "mongoose": "^8.0.3",
         "nanoid": "^5.0.7",
+        "reflect-metadata": "^0.2.2",
+        "sequelize": "^6.37.3",
+        "sqlite3": "^5.1.7",
         "uuid": "^9.0.1",
         "ws": "^8.16.0"
     },
     "devDependencies": {
+        "@tsconfig/node22": "^22.0.0",
+        "@types/node": "^20.12.12",
         "@types/uuid": "^9.0.7",
+        "@types/validator": "^13.11.10",
         "@types/ws": "^8.5.10",
         "@typescript-eslint/eslint-plugin": "^6.16.0",
         "@typescript-eslint/parser": "^6.16.0",
         "eslint": "^8.56.0",
         "nodemon": "^3.0.2",
+        "sequelize-cli": "^6.6.2",
         "tsx": "^4.7.0",
         "typescript": "^5.3.3"
     }
