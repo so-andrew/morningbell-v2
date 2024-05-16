@@ -49,13 +49,11 @@ export default function JoinForm() {
             setRoomID(lastMessage.params!.code);
             router.push(`/rooms/${lastMessage.params!.code}`);
         }
-        if (lastMessage && lastMessage.type === 'roomUpdate') {
-            setRoomID(lastMessage.params!.code);
-            router.push(`/rooms/${lastMessage.params!.code}`);
-        }
     }, [val]);
 
     useEffect(() => {
+        setRoomID('');
+        localStorage.setItem('roomID', '');
         setInvalidRoomCode(false);
         setInvalidUsername(false);
         setRoomFull(false);
