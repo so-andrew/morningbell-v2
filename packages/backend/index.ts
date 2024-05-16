@@ -5,8 +5,10 @@ import { WebSocketServer } from 'ws';
 import { customAlphabet } from 'nanoid';
 import url from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { Socket } from './socket';
+import { Socket } from './socket.js';
 import dotenv from 'dotenv';
+import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
+import SQLite from 'sqlite3';
 
 import {
     BuzzerResetParams,
@@ -17,7 +19,7 @@ import {
     ClientLeaveParams,
     LogMessage,
     RoomData,
-} from '../frontend/types/WebSocketMessage';
+} from '../frontend/types/WebSocketMessage.js';
 
 dotenv.config();
 
@@ -37,12 +39,56 @@ const wss = new WebSocketServer({
 	port: 8000,
 	path: wsPath
 });
+
+// In-memory collections
 const roomConnections = new Map<string, Map<string, Socket>>();
 const roomData = new Map<string, RoomData>();
 const users = new Map<string, Map<string, string>>();
 const logs = new Map<string, Array<LogMessage>>();
 
-wss.on('connection', (ws:Socket, req) => {
+// Databases
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite',
+    dialectOptions: {
+        mode: SQLite.OPEN_READWRITE | SQLite.OPEN_CREATE | SQLite.OPEN_FULLMUTEX,
+    }
+});
+
+class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
+    declare userID: string;
+    declare username: string;
+    declare lastRoomJoined: string | null;
+}
+
+User.init({
+    userID: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    username: {
+        type: DataTypes.STRING,
+    },
+    lastRoomJoined: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
+}, {
+    tableName: 'users',
+    sequelize
+});
+
+//sequelize.sync({force:true});
+
+// const User = sequelize.define('User', {
+//   userID: DataTypes.STRING,
+//   lastRoomJoined: {
+//     type: DataTypes.STRING,
+//     defaultValue: 'null'
+//   },
+// });
+
+wss.on('connection', async (ws:Socket, req) => {
     const params = url.parse(req.url as string, true);
 
     // Assign uid by either receiving from connection request or assigning a new one
@@ -60,8 +106,27 @@ wss.on('connection', (ws:Socket, req) => {
         }),
     );
 
+    const [userDbEntry, created] = await User.findOrCreate({ where: { userID: uuid } });
+    console.log('Entry just created = ' + created);
+    if(!created && userDbEntry.lastRoomJoined){
+        // Check if room is still valid
+        if(roomConnections.has(userDbEntry.lastRoomJoined)){
+            // Try reconnect
+            join({ code:userDbEntry.lastRoomJoined, username:userDbEntry.username, userID: userDbEntry.userID});
+        }
+        else {
+            // 
+            await userDbEntry.update({ lastRoomJoined: null });
+        }
+    }
+
+    console.log(userDbEntry.toJSON());
+
     ws.isAlive = true;
     ws.userID = uuid;
+
+
+
     ws.on('error', console.error);
     ws.on('pong', heartbeat);
 
@@ -184,6 +249,13 @@ wss.on('connection', (ws:Socket, req) => {
             roomData.get(roomID)!.combinedChatLogs.push(log);
         }
 
+        // Update database entry
+        const userDbEntry = await User.findOne({ where: { userID: uuid }});
+        if (userDbEntry === null){
+            console.log('User not in database, error');
+        }
+        await userDbEntry!.update({ lastRoomJoined: roomID, username: username });
+
         // Sending join confirmation message to client
         console.log(`Sending join message to ${uuid}`);
         ws.send(
@@ -298,6 +370,13 @@ wss.on('connection', (ws:Socket, req) => {
             roomData.get(roomID)!.combinedChatLogs.push(log);
         }
 
+        // Update database entry
+        const userDbEntry = await User.findOne({ where: { userID: uuid }});
+        if (userDbEntry === null){
+            console.log('User not in database, error');
+        }
+        await userDbEntry!.update({ lastRoomJoined: roomID, username: username });
+
         // Sending join confirmation message to client
         console.log(`Sending join message to ${uuid}`);
         ws.send(
@@ -382,6 +461,15 @@ wss.on('connection', (ws:Socket, req) => {
             }
         }
         //delete roomConnections[roomID][params.userID];
+
+        // Update database entry
+        const userDbEntry = await User.findOne({ where: { userID: uuid }});
+        if (userDbEntry === null){
+            console.log('User not in database, error');
+        }
+        await userDbEntry!.update({ lastRoomJoined: null });
+        console.log(`User ${userID} has left room ${roomID}`);
+        console.log(userDbEntry?.toJSON());
 
         // Send message to clients
         broadcastUserUpdate(roomID);
