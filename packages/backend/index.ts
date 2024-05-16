@@ -206,7 +206,7 @@ wss.on('connection', async (ws:Socket, req) => {
     }
 
     async function join(params: ClientJoinParams) {
-        const { code: roomID, username } = params;
+        const { code: roomID, username, userID } = params;
 
         // If room does not exist
         if (!roomConnections.has(roomID)) {
@@ -225,8 +225,8 @@ wss.on('connection', async (ws:Socket, req) => {
         }
 
         // If name is already taken
-        for (const name of users.get(roomID)!.values()) {
-            if (username === name) {
+        for (const [id, name] of users.get(roomID)!.entries()) {
+            if (username === name  && userID !== id) {
                 console.warn(`Username ${username} already taken.`);
                 ws.send(
                     JSON.stringify({ type: 'error', error: 'usernameTaken' }),
