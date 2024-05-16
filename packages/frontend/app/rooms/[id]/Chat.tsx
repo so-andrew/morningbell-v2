@@ -52,7 +52,7 @@ export default function Chat(params: {
                 Chat
             </h2>
             <section className='flex w-[90%] flex-col items-center rounded-lg bg-white md:max-w-lg'>
-                <section className='mx-auto my-2 flex max-h-48 w-[90%] flex-col gap-1 overflow-y-auto bg-white py-2' ref={containerRef}>
+                <section className='mx-auto my-2 flex w-[90%] flex-col gap-1 overflow-y-auto bg-white py-2' ref={containerRef}>
                     {chatLogs.map((element, index) => {
                         return (
                             <ChatMessageItem key={index} element={element} />

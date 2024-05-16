@@ -15,7 +15,7 @@ function Landing(params: { userID: string }) {
     }
 
     return (
-        <section className='flex h-screen flex-col content-start lg:grid lg:grid-cols-2 lg:content-center'>
+        <section className='flex flex-col lg:grid lg:grid-cols-2 lg:content-center'>
             <div className='mx-auto my-10 max-w-xl px-16 text-center text-white'>
                 <h1 className='my-6 text-4xl'>A buzzer app for the masses.</h1>
                 <p className='my-2 text-xl'>

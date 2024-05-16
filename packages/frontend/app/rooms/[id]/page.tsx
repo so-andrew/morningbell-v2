@@ -79,6 +79,7 @@ export default function Room() {
                     }),
                 );
                 setRoomID('');
+                localStorage.setItem('roomID', '');
                 // For handling back button presses (see check above)
                 localStorage.setItem('backButtonPressed', 'true');
             } else {
@@ -198,8 +199,8 @@ export default function Room() {
     return (
         <>
             {ready && (
-                <section className='grid h-screen content-start items-start lg:grid-cols-2 lg:items-center'>
-                    <div className='m-auto'>
+                <section className='flex flex-col lg:grid grid-flow-col lg:items-center'>
+                    <div className='mx-auto'>
                         <button
                             className={`${
                                 buzzerLocked
@@ -215,7 +216,8 @@ export default function Room() {
                                   : 'Buzz'}
                         </button>
                     </div>
-                    <>
+                    <div className='flex flex-col'>
+                        <>
                         {userID !== host && (
                             <UserList
                                 userList={userList}
@@ -237,6 +239,7 @@ export default function Room() {
                     <div className='lg:col-start-2'>
                         <Chat chatLogs={chatLogs} />
                     </div>
+                    </div>
                 </section>
             )}
             {!ready && !showErrorMessage && (
@@ -253,6 +256,7 @@ export default function Room() {
                     to go home.
                 </p>
             )}
+            <div className='h-20'></div>
         </>
     );
 }

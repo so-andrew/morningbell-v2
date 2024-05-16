@@ -53,6 +53,7 @@ export default function Home() {
             {pageState === 'landing' && <Landing userID={userID} />}
             {pageState === 'create' && <CreatePage />}
             {pageState === 'join' && <JoinPage />}
+            <div className='w-fit h-20'></div>
         </>
     );
 }

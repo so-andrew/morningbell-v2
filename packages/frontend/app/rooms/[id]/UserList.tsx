@@ -21,7 +21,7 @@ export default function UserList(UserListData: {
             <h2 className='text-white text-center text-xl font-bold m-6 mx-auto'>
                 Players
             </h2>
-            <ul className='list-none text-white text-left py-2 min-w-fit w-3/5 lg:max-w-lg'>
+            <ul className='list-none text-white text-left py-2 w-[90%] md:max-w-lg'>
                 <li
                     className={`${
                         userID === buzzedUser

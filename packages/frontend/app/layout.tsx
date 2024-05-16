@@ -19,10 +19,10 @@ export default function RootLayout({
 }) {
     return (
         <html lang='en'>
-            <body className={inter.className}>
+            <body className={`${inter.className} min-h-screen flex flex-col`}>
                 <AppContextProvider>
                     <Navigation />
-                    {children}
+                    <main className='flex flex-col flex-grow justify-start lg:justify-center'>{children}</main>
                 </AppContextProvider>
             </body>
         </html>

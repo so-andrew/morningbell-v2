@@ -18,7 +18,7 @@ export default function HostUserList(HostUserListData: {
             <h2 className='text-white text-center text-xl font-bold m-6 mx-auto'>
                 Players
             </h2>
-            <ul className='list-none text-white text-left py-2 min-w-fit w-3/5 lg:max-w-lg'>
+            <ul className='list-none text-white text-left py-2 w-[90%] md:max-w-lg'>
                 <li className='bg-[#404f5f] hover:bg-blue-500 outline outline-1 outline-zinc-300/50 rounded-md px-6 py-2 mb-2'>
                     <b>{username}</b>{' '}
                     <span className='text-gray-400'>(Host)</span>
