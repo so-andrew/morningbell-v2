@@ -128,7 +128,10 @@ wss.on('connection', async (ws:Socket, req) => {
 
 
     ws.on('error', console.error);
-    ws.on('pong', heartbeat);
+    ws.on('pong', () => {
+        ws.isAlive = true;
+        console.log(`Received pong from ${uuid}`);
+    });
 
     ws.on('message', async (data) => {
         const obj = JSON.parse(data.toString());
@@ -698,9 +701,4 @@ function broadcastChatUpdate(roomID: string) {
             }),
         );
     }
-}
-
-function heartbeat() {
-    this.isAlive = true;
-    console.log('Received pong');
 }
